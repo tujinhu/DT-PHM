@@ -29,17 +29,14 @@ echo.
 git status --short
 echo.
 
-set /p DO_PULL=Pull remote changes with rebase before pushing? [Y/n]: 
-if /i not "!DO_PULL!"=="n" (
-    git pull --rebase origin "!BRANCH!"
-    if errorlevel 1 goto :fail
-)
-
 set /p COMMIT_MSG=Commit message [Update project]: 
 if "!COMMIT_MSG!"=="" set "COMMIT_MSG=Update project"
 
 git add .
 if errorlevel 1 goto :fail
+
+echo [INFO] Removing local-only folders from git index if they were tracked...
+git rm --cached -r --ignore-unmatch docs >nul 2>nul
 
 git diff --cached --quiet
 if errorlevel 1 (
@@ -47,6 +44,12 @@ if errorlevel 1 (
     if errorlevel 1 goto :fail
 ) else (
     echo [INFO] No staged changes to commit.
+)
+
+set /p DO_PULL=Pull remote changes with rebase before pushing? [Y/n]: 
+if /i not "!DO_PULL!"=="n" (
+    git pull --rebase origin "!BRANCH!"
+    if errorlevel 1 goto :fail
 )
 
 git push origin "!BRANCH!"

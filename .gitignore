@@ -12,12 +12,8 @@ env/
 .vscode/
 .idea/
 
-# Runtime logs and generated reports
-platform/**/log/
-platform/**/reports/
-*.log
-*.xlsx
-*.xls
+# Local writing/reference documents that should not be uploaded
+/docs/
 
 # Temporary files
 tmp/

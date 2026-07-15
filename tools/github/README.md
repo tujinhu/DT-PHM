@@ -31,5 +31,7 @@ tools\github\02_sync_push_updates.bat
 tools\github\04_auth_and_push_https.bat
 ```
 
-The project `.gitignore` excludes generated logs, reports, cache files, and
-Excel outputs so GitHub stores source/configuration rather than runtime data.
+The root `docs/` folder is kept local only. Empty `src/` subfolders are tracked
+with `.gitkeep` files so the source architecture is visible on GitHub. Runtime
+logs, reports, Excel outputs, and `platform/px4/` are intentionally uploadable
+for this project.

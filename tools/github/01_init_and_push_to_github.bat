@@ -60,6 +60,9 @@ if "!COMMIT_MSG!"=="" set "COMMIT_MSG=Initial platform scaffold"
 git add .
 if errorlevel 1 goto :fail
 
+echo [INFO] Removing local-only folders from git index if they were tracked...
+git rm --cached -r --ignore-unmatch docs >nul 2>nul
+
 git diff --cached --quiet
 if errorlevel 1 (
     git commit -m "!COMMIT_MSG!"

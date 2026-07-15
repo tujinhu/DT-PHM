@@ -54,7 +54,8 @@ python platform\verification\dt-dt.py
 
 The default configs now point to project-local copies of the needed legacy assets:
 
-- `platform/sdk/toolchain/SITLRun.bat`
+- `platform/sdk/toolchain/SITLRun.bat` on Windows
+- `platform/sdk/toolchain/SITLRun.sh` on Linux
 - `platform/sdk/rflysim_legacy/PX4MavCtrlV4.py`
 
 Adjust the config files if your RflySim installation paths change.

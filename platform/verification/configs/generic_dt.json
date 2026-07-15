@@ -3,15 +3,20 @@
   "_options": {
     "timeline.action": ["arm", "disarm", "takeoff", "goto", "velocity", "hover", "land", "mission", "inject_fault", "clear_fault", "switch_virtual_redundancy", "wait"],
     "vehicle.backend": ["dt"],
-    "recording.fields": ["uavAngEular", "uavAngRate", "uavPosNED", "uavVelNED", "uavAngQuatern", "uavAccB", "uavGyro", "uavMag", "uavVibr"]
+    "recording.fields": ["uavAngEular", "uavAngRate", "uavPosNED", "uavVelNED", "uavAngQuatern", "uavAccB", "uavGyro", "uavMag", "uavVibr"],
+    "toolchain.scripts.windows": "Windows RflySim launcher, usually SITLRun.bat.",
+    "toolchain.scripts.linux": "Linux PX4-SITL launcher, usually SITLRun.sh."
   },
   "case_id": "hover_fault_001",
   "name": "Hover, inject IMU fault",
   "reports_dir": "../reports",
   "toolchain": {
-    "_comment": "enabled=true launches SITLRun.bat. Set RFV_VEHICLE_NUM to match vehicles length.",
+    "_comment": "enabled=true launches the platform-specific toolchain script. Set RFV_VEHICLE_NUM to match vehicles length.",
     "enabled": true,
-    "bat_path": "../../sdk/toolchain/SITLRun.bat",
+    "scripts": {
+      "windows": "../../sdk/toolchain/SITLRun.bat",
+      "linux": "../../sdk/toolchain/SITLRun.sh"
+    },
     "startup_wait_s": 20,
     "stop_on_exit": false,
     "env": {

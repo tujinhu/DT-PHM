@@ -1,0 +1,333 @@
+{
+  "case_id": "hover_fault_001",
+  "name": "Hover, inject IMU fault",
+  "started_at": "2026-07-15T20:04:43",
+  "finished_at": "2026-07-15T20:04:43",
+  "dry_run": true,
+  "vehicle_count": 2,
+  "data_log": "D:\\TJH\\Platform\\DT-enabled PHM\\platform\\verification\\log\\hover_fault_001_20260715_200443.xlsx",
+  "events": [
+    {
+      "index": 1,
+      "action": "arm",
+      "elapsed_s": 0.0,
+      "targets": "all",
+      "snapshots": {
+        "dt1": {
+          "id": "dt1",
+          "backend": "dt",
+          "vehicle_id": 1,
+          "pos_ned": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "armed": true,
+          "landed": true
+        },
+        "dt2": {
+          "id": "dt2",
+          "backend": "dt",
+          "vehicle_id": 2,
+          "pos_ned": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "armed": true,
+          "landed": true
+        }
+      }
+    },
+    {
+      "index": 2,
+      "action": "wait",
+      "elapsed_s": 0.0,
+      "targets": "all",
+      "snapshots": {
+        "dt1": {
+          "id": "dt1",
+          "backend": "dt",
+          "vehicle_id": 1,
+          "pos_ned": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "armed": true,
+          "landed": true
+        },
+        "dt2": {
+          "id": "dt2",
+          "backend": "dt",
+          "vehicle_id": 2,
+          "pos_ned": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "armed": true,
+          "landed": true
+        }
+      }
+    },
+    {
+      "index": 3,
+      "action": "takeoff",
+      "elapsed_s": 0.0,
+      "targets": "all",
+      "snapshots": {
+        "dt1": {
+          "id": "dt1",
+          "backend": "dt",
+          "vehicle_id": 1,
+          "pos_ned": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "armed": true,
+          "landed": false
+        },
+        "dt2": {
+          "id": "dt2",
+          "backend": "dt",
+          "vehicle_id": 2,
+          "pos_ned": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "armed": true,
+          "landed": false
+        }
+      }
+    },
+    {
+      "index": 4,
+      "action": "wait",
+      "elapsed_s": 0.0,
+      "targets": "all",
+      "snapshots": {
+        "dt1": {
+          "id": "dt1",
+          "backend": "dt",
+          "vehicle_id": 1,
+          "pos_ned": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "armed": true,
+          "landed": false
+        },
+        "dt2": {
+          "id": "dt2",
+          "backend": "dt",
+          "vehicle_id": 2,
+          "pos_ned": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "armed": true,
+          "landed": false
+        }
+      }
+    },
+    {
+      "index": 5,
+      "action": "mission",
+      "elapsed_s": 0.0,
+      "targets": "all",
+      "snapshots": {
+        "dt1": {
+          "id": "dt1",
+          "backend": "dt",
+          "vehicle_id": 1,
+          "pos_ned": [
+            1.9990131207314632,
+            -0.06282151815625495,
+            -1.0
+          ],
+          "armed": true,
+          "landed": false
+        },
+        "dt2": {
+          "id": "dt2",
+          "backend": "dt",
+          "vehicle_id": 2,
+          "pos_ned": [
+            1.9990131207314632,
+            -0.06282151815625495,
+            -1.0
+          ],
+          "armed": true,
+          "landed": false
+        }
+      }
+    },
+    {
+      "index": 6,
+      "action": "hover",
+      "elapsed_s": 0.0,
+      "targets": "all",
+      "snapshots": {
+        "dt1": {
+          "id": "dt1",
+          "backend": "dt",
+          "vehicle_id": 1,
+          "pos_ned": [
+            1.9990131207314632,
+            -0.06282151815625495,
+            -1.0
+          ],
+          "armed": true,
+          "landed": false
+        },
+        "dt2": {
+          "id": "dt2",
+          "backend": "dt",
+          "vehicle_id": 2,
+          "pos_ned": [
+            1.9990131207314632,
+            -0.06282151815625495,
+            -1.0
+          ],
+          "armed": true,
+          "landed": false
+        }
+      }
+    },
+    {
+      "index": 7,
+      "action": "wait",
+      "elapsed_s": 0.0,
+      "targets": "all",
+      "snapshots": {
+        "dt1": {
+          "id": "dt1",
+          "backend": "dt",
+          "vehicle_id": 1,
+          "pos_ned": [
+            1.9990131207314632,
+            -0.06282151815625495,
+            -1.0
+          ],
+          "armed": true,
+          "landed": false
+        },
+        "dt2": {
+          "id": "dt2",
+          "backend": "dt",
+          "vehicle_id": 2,
+          "pos_ned": [
+            1.9990131207314632,
+            -0.06282151815625495,
+            -1.0
+          ],
+          "armed": true,
+          "landed": false
+        }
+      }
+    },
+    {
+      "index": 8,
+      "action": "inject_fault",
+      "elapsed_s": 0.0,
+      "targets": [
+        "dt2"
+      ],
+      "snapshots": {
+        "dt1": {
+          "id": "dt1",
+          "backend": "dt",
+          "vehicle_id": 1,
+          "pos_ned": [
+            1.9990131207314632,
+            -0.06282151815625495,
+            -1.0
+          ],
+          "armed": true,
+          "landed": false
+        },
+        "dt2": {
+          "id": "dt2",
+          "backend": "dt",
+          "vehicle_id": 2,
+          "pos_ned": [
+            1.9990131207314632,
+            -0.06282151815625495,
+            -1.0
+          ],
+          "armed": true,
+          "landed": false
+        }
+      }
+    },
+    {
+      "index": 9,
+      "action": "wait",
+      "elapsed_s": 0.0,
+      "targets": "all",
+      "snapshots": {
+        "dt1": {
+          "id": "dt1",
+          "backend": "dt",
+          "vehicle_id": 1,
+          "pos_ned": [
+            1.9990131207314632,
+            -0.06282151815625495,
+            -1.0
+          ],
+          "armed": true,
+          "landed": false
+        },
+        "dt2": {
+          "id": "dt2",
+          "backend": "dt",
+          "vehicle_id": 2,
+          "pos_ned": [
+            1.9990131207314632,
+            -0.06282151815625495,
+            -1.0
+          ],
+          "armed": true,
+          "landed": false
+        }
+      }
+    },
+    {
+      "index": 10,
+      "action": "land",
+      "elapsed_s": 0.0,
+      "targets": "all",
+      "snapshots": {
+        "dt1": {
+          "id": "dt1",
+          "backend": "dt",
+          "vehicle_id": 1,
+          "pos_ned": [
+            1.9990131207314632,
+            -0.06282151815625495,
+            -1.0
+          ],
+          "armed": true,
+          "landed": true
+        },
+        "dt2": {
+          "id": "dt2",
+          "backend": "dt",
+          "vehicle_id": 2,
+          "pos_ned": [
+            1.9990131207314632,
+            -0.06282151815625495,
+            -1.0
+          ],
+          "armed": true,
+          "landed": true
+        }
+      }
+    }
+  ]
+}

@@ -5,12 +5,17 @@
     "vehicle.backend": ["dt", "real"],
     "recording.fields": ["uavAngEular", "uavAngRate", "uavPosNED", "uavVelNED", "uavAngQuatern", "uavAccB", "uavGyro", "uavMag", "uavVibr"],
     "real.init_timing": "startup_delay_s + yaw_init_delay_s + offboard_delay_s",
-    "dt.init_timing": "startup_delay_s + offboard_delay_s"
+    "dt.init_timing": "startup_delay_s + offboard_delay_s",
+    "toolchain.scripts.windows": "Windows RflySim launcher, usually SITLRun.bat.",
+    "toolchain.scripts.linux": "Linux PX4-SITL launcher, usually SITLRun.sh."
   },
   "toolchain": {
-    "_comment": "Enable this when the collection host also launches the DT SITL toolchain. RFV_VEHICLE_NUM should match the number of DT vehicles.",
+    "_comment": "Enable this when the collection host also launches the DT SITL toolchain. The platform-specific script is selected automatically.",
     "enabled": false,
-    "bat_path": "../../sdk/toolchain/SITLRun.bat",
+    "scripts": {
+      "windows": "../../sdk/toolchain/SITLRun.bat",
+      "linux": "../../sdk/toolchain/SITLRun.sh"
+    },
     "startup_wait_s": 35,
     "stop_on_exit": false,
     "env": {

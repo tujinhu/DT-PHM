@@ -10,6 +10,7 @@ The reusable pieces are inherited from `platform/sdk`:
 - `backends/dt_vehicle.py` manages the healthy DT.
 - `backends/real_vehicle.py` manages the ROS real-vehicle path.
 - `core/logging.py` writes one xlsx workbook with one sheet per vehicle.
+- `core/toolchain.py` selects `SITLRun.bat` on Windows and `SITLRun.sh` on Linux.
 
 Dry-run validation:
 

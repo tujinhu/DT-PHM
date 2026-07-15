@@ -70,6 +70,12 @@ class CollectionRunner:
         toolchain = config.get("toolchain")
         if isinstance(toolchain, dict):
             resolve_in_place(toolchain, "bat_path")
+            resolve_in_place(toolchain, "sh_path")
+            resolve_in_place(toolchain, "script_path")
+            scripts = toolchain.get("scripts")
+            if isinstance(scripts, dict):
+                resolve_in_place(scripts, "windows")
+                resolve_in_place(scripts, "linux")
 
         for vehicle in config.get("vehicles", []):
             if isinstance(vehicle, dict):

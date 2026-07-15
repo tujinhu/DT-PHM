@@ -4,16 +4,21 @@
     "timeline.action": ["arm", "disarm", "takeoff", "goto", "velocity", "hover", "land", "mission", "inject_fault", "clear_fault", "switch_virtual_redundancy", "wait"],
     "vehicle.backend": ["dt"],
     "recording.fields": ["uavAngEular", "uavAngRate", "uavPosNED", "uavVelNED", "uavAngQuatern", "uavAccB", "uavGyro", "uavMag", "uavVibr"],
-    "toolchain.env.RFV_VEHICLE_NUM": "Number of DT vehicles launched by SITLRun.bat.",
-    "toolchain.env.RFV_START_INDEX": "First DT vehicle index launched by SITLRun.bat."
+    "toolchain.scripts.windows": "Windows RflySim launcher, usually SITLRun.bat.",
+    "toolchain.scripts.linux": "Linux PX4-SITL launcher, usually SITLRun.sh.",
+    "toolchain.env.RFV_VEHICLE_NUM": "Number of DT vehicles launched by the selected toolchain script.",
+    "toolchain.env.RFV_START_INDEX": "First DT vehicle index launched by the selected toolchain script."
   },
   "case_id": "hover_fault_001",
   "name": "Hover, inject IMU fault",
   "reports_dir": "../reports",
   "toolchain": {
-    "_comment": "enabled=true launches the project-local SITLRun.bat. startup_wait_s waits for RflySim/PX4/CopterSim startup. stop_on_exit=false keeps RflySim windows alive after Python exits.",
+    "_comment": "enabled=true launches the platform-specific toolchain script. Windows uses SITLRun.bat; Linux uses SITLRun.sh. startup_wait_s waits for RflySim/PX4 startup.",
     "enabled": true,
-    "bat_path": "../../sdk/toolchain/SITLRun.bat",
+    "scripts": {
+      "windows": "../../sdk/toolchain/SITLRun.bat",
+      "linux": "../../sdk/toolchain/SITLRun.sh"
+    },
     "startup_wait_s": 35,
     "stop_on_exit": false,
     "env": {

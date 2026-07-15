@@ -1,0 +1,118 @@
+{
+  "_comment": "Collection config combines runtime topology and one or more timelines. Normal controls default to all vehicles; inject_fault/clear_fault default to real vehicles so the DT stays healthy.",
+  "_options": {
+    "timeline.action": ["arm", "disarm", "takeoff", "goto", "velocity", "hover", "land", "mission", "inject_fault", "clear_fault", "wait"],
+    "vehicle.backend": ["dt", "real"],
+    "recording.fields": ["uavAngEular", "uavAngRate", "uavPosNED", "uavVelNED", "uavAngQuatern", "uavAccB", "uavGyro", "uavMag", "uavVibr"],
+    "real.init_timing": "startup_delay_s + yaw_init_delay_s + offboard_delay_s",
+    "dt.init_timing": "startup_delay_s + offboard_delay_s"
+  },
+  "toolchain": {
+    "_comment": "Enable this when the collection host also launches the DT SITL toolchain. RFV_VEHICLE_NUM should match the number of DT vehicles.",
+    "enabled": false,
+    "bat_path": "../../sdk/toolchain/SITLRun.bat",
+    "startup_wait_s": 35,
+    "stop_on_exit": false,
+    "env": {
+      "RFV_VEHICLE_NUM": "1",
+      "RFV_START_INDEX": "1"
+    }
+  },
+  "recording": {
+    "_comment": "Recording starts after arm and stops after the final timeline command. Each timeline writes one xlsx workbook with one sheet per vehicle.",
+    "enabled": true,
+    "sample_hz": 50,
+    "output_dir": "../log",
+    "fields": [
+      "uavAngEular",
+      "uavAngRate",
+      "uavPosNED",
+      "uavVelNED",
+      "uavAngQuatern",
+      "uavAccB",
+      "uavGyro",
+      "uavMag",
+      "uavVibr"
+    ]
+  },
+  "vehicles": [
+    {
+      "_comment": "Healthy DT baseline. Set startup_delay_s/offboard_delay_s so the DT initialization duration matches the real vehicle.",
+      "id": "dt",
+      "backend": "dt",
+      "vehicle_id": 1,
+      "role": "healthy_dt",
+      "ip": "127.0.0.1",
+      "rfly_utils_path": "../../sdk/rflysim_legacy",
+      "udp_mode": 2,
+      "init_true_data": true,
+      "init_offboard": true,
+      "startup_delay_s": 8,
+      "offboard_delay_s": 3
+    },
+    {
+      "_comment": "Real aircraft backend. Requires ROS at runtime; ROS imports are loaded lazily only when this backend initializes.",
+      "id": "real",
+      "backend": "real",
+      "vehicle_id": 1,
+      "role": "fault_injected_real",
+      "ip": "192.168.1.101",
+      "port": 15501,
+      "rfly_utils_path": "../../sdk/rflysim_legacy",
+      "udp_mode": 2,
+      "startup_delay_s": 3,
+      "yaw_init_delay_s": 5,
+      "offboard_delay_s": 3,
+      "ros": {
+        "_comment": "set_params is optional; use it only when the ROS deployment needs explicit parameters before collection.",
+        "enabled": true,
+        "node_name": "rflydt",
+        "anonymous": false,
+        "set_params": {}
+      },
+      "mocap": {
+        "_comment": "VRPN pose topic defaults to /vrpn_client_node/{rig_prefix}{mav_id}/pose. Set pose_topic/twist_topic explicitly if needed.",
+        "enabled": true,
+        "rig_prefix": "droneyee0",
+        "check_status": true,
+        "send_vision": true,
+        "start_twist_thread": false
+      }
+    }
+  ],
+  "timelines": [
+    {
+      "_comment": "One timeline equals one flight round and one output xlsx file. Add more objects to run multiple rounds in one script execution.",
+      "case_id": "real_dt_collection_001",
+      "name": "Real fault injection with healthy DT baseline",
+      "timeline": [
+        {"action": "arm"},
+        {"action": "wait", "seconds": 1},
+        {"action": "takeoff", "pos_ned": [0, 0, -1]},
+        {"action": "wait", "seconds": 10},
+        {
+          "action": "mission",
+          "trajectory": {
+            "type": "circle",
+            "total_time": 20,
+            "time_step": 0.1,
+            "repetitions": 1.0,
+            "radius": 2,
+            "center_z": -1
+          },
+          "period_s": 0.1
+        },
+        {"action": "hover"},
+        {"action": "wait", "seconds": 3},
+        {
+          "action": "inject_fault",
+          "mode": 12,
+          "flag": 3,
+          "params": [1, -1, -1, 0, 6]
+        },
+        {"action": "wait", "seconds": 6},
+        {"action": "land"}
+      ]
+    }
+  ]
+}

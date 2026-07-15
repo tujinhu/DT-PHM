@@ -1,0 +1,100 @@
+{
+  "_comment": "Generic verification config combines Scenario and runtime topology. Override --config for other DT-only topologies.",
+  "_options": {
+    "timeline.action": ["arm", "disarm", "takeoff", "goto", "velocity", "hover", "land", "mission", "inject_fault", "clear_fault", "switch_virtual_redundancy", "wait"],
+    "vehicle.backend": ["dt"],
+    "recording.fields": ["uavAngEular", "uavAngRate", "uavPosNED", "uavVelNED", "uavAngQuatern", "uavAccB", "uavGyro", "uavMag", "uavVibr"]
+  },
+  "case_id": "hover_fault_001",
+  "name": "Hover, inject IMU fault",
+  "reports_dir": "../reports",
+  "toolchain": {
+    "_comment": "enabled=true launches SITLRun.bat. Set RFV_VEHICLE_NUM to match vehicles length.",
+    "enabled": true,
+    "bat_path": "../../sdk/toolchain/SITLRun.bat",
+    "startup_wait_s": 20,
+    "stop_on_exit": false,
+    "env": {
+      "RFV_VEHICLE_NUM": "2",
+      "RFV_START_INDEX": "1"
+    }
+  },
+  "recording": {
+    "_comment": "Online recorder writes one workbook to output_dir with one sheet per vehicle.",
+    "enabled": true,
+    "sample_hz": 50,
+    "output_dir": "../log",
+    "fields": [
+      "uavAngEular",
+      "uavAngRate",
+      "uavPosNED",
+      "uavVelNED",
+      "uavAngQuatern",
+      "uavAccB",
+      "uavGyro",
+      "uavMag",
+      "uavVibr"
+    ]
+  },
+  "vehicles": [
+    {
+      "_comment": "DT backend connects to one full RflySim/SITL vehicle.",
+      "id": "dt1",
+      "backend": "dt",
+      "vehicle_id": 1,
+      "role": "full_toolchain_dt",
+      "ip": "127.0.0.1",
+      "rfly_utils_path": "../../sdk/rflysim_legacy",
+      "udp_mode": 2,
+      "init_true_data": true,
+      "init_offboard": true,
+      "startup_delay_s": 2,
+      "offboard_delay_s": 0
+    },
+    {
+      "_comment": "Second DT used as the target vehicle for the sample injected fault.",
+      "id": "dt2",
+      "backend": "dt",
+      "vehicle_id": 2,
+      "role": "full_toolchain_dt",
+      "ip": "127.0.0.1",
+      "rfly_utils_path": "../../sdk/rflysim_legacy",
+      "udp_mode": 2,
+      "init_true_data": true,
+      "init_offboard": true,
+      "startup_delay_s": 2,
+      "offboard_delay_s": 0
+    }
+  ],
+  "timeline": [
+    {"action": "arm"},
+    {"action": "wait", "seconds": 1},
+    {"action": "takeoff", "pos_ned": [0, 0, -1]},
+    {"action": "wait", "seconds": 10},
+    {
+      "_comment": "mission streams generated trajectory points. trajectory.type can be circle, rectangle, figure8, or sin.",
+      "action": "mission",
+      "trajectory": {
+        "type": "circle",
+        "total_time": 20,
+        "time_step": 0.1,
+        "repetitions": 1.0,
+        "radius": 2,
+        "center_z": -1
+      },
+      "period_s": 0.1
+    },
+    {"action": "hover"},
+    {"action": "wait", "seconds": 3},
+    {
+      "_comment": "Fault injection defaults to explicit targets in verification.",
+      "action": "inject_fault",
+      "targets": ["dt2"],
+      "mode": 12,
+      "flag": 3,
+      "params": [1, -1, -1, 0, 6]
+    },
+    {"action": "wait", "seconds": 6},
+    {"action": "land"}
+  ]
+}

@@ -17,6 +17,10 @@ Run these BAT files manually from Windows.
    - Use on the onboard computer.
    - It clones the project if missing, or updates it if already cloned.
 
+4. `04_auth_and_push_https.bat`
+   - Use when GitHub reports `Invalid username or token`.
+   - It tries GitHub CLI or Git Credential Manager browser login, then pushes.
+
 Recommended flow:
 
 ```bat
@@ -24,6 +28,7 @@ tools\github\00_github_menu.bat
 tools\github\01_init_and_push_to_github.bat
 tools\github\03_onboard_clone_or_update.bat
 tools\github\02_sync_push_updates.bat
+tools\github\04_auth_and_push_https.bat
 ```
 
 The project `.gitignore` excludes generated logs, reports, cache files, and

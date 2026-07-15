@@ -50,7 +50,7 @@ if errorlevel 1 (
 )
 
 git push origin "!BRANCH!"
-if errorlevel 1 goto :fail
+if errorlevel 1 goto :auth_fail
 
 echo.
 echo [OK] Sync push finished.
@@ -60,5 +60,13 @@ exit /b 0
 :fail
 echo.
 echo [ERROR] Sync failed. Resolve the issue above, then rerun this script.
+pause
+exit /b 1
+
+:auth_fail
+echo.
+echo [ERROR] Push failed. If the message says "Invalid username or token",
+echo         run tools\github\04_auth_and_push_https.bat or choose option 4
+echo         in tools\github\00_github_menu.bat.
 pause
 exit /b 1

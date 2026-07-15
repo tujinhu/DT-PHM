@@ -1,0 +1,6 @@
+module_name: Zhuoyi Flow optical flow sensor with laser
+serial_config:
+    - command: zyflow start -d ${SERIAL_DEV}
+      port_config_param:
+        name: SENS_ZYFLOW_CFG
+        group: Sensors

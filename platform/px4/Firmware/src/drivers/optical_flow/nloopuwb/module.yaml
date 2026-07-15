@@ -1,0 +1,7 @@
+module_name: Nooploop UWB Driver
+serial_config:
+    - command: nloopuwb start -d ${SERIAL_DEV}
+      port_config_param:
+        name: SENS_UWB_CFG
+        group: Sensors
+

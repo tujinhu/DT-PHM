@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 import threading
 import time
 from typing import Any
 
 from core.interfaces import VehicleBackend, VehicleSpec
-from core.logging import Log, RealtimeDataRecorder
+from core.logging import Log, PX4OfflineLogCollector, RealtimeDataRecorder
 from core.scenario import Scenario, load_json
 from core.toolchain import ToolchainProcess
 from core.trajectory import generate_trajectory
@@ -46,6 +47,8 @@ class CollectionRunner:
         self.current_phase: dict[str, Any] = {}
         self.current_phase_started = time.time()
         self.data_logs: list[Path] = []
+        self.offline_logs: list[Path] = []
+        self.current_round_started: datetime | None = None
 
     @staticmethod
     def from_config_file(config_path: str | Path, dry_run: bool = False) -> "CollectionRunner":
@@ -80,6 +83,12 @@ class CollectionRunner:
         for vehicle in config.get("vehicles", []):
             if isinstance(vehicle, dict):
                 resolve_in_place(vehicle, "rfly_utils_path")
+
+        offline_logs = config.get("offline_logs")
+        if isinstance(offline_logs, dict):
+            resolve_in_place(offline_logs, "output_dir")
+            resolve_in_place(offline_logs, "firmware_dir")
+            resolve_in_place(offline_logs, "build_dir")
 
         scenario_ref = config.get("scenario")
         if isinstance(scenario_ref, str):
@@ -153,6 +162,8 @@ class CollectionRunner:
 
     def _run_one_timeline(self, round_index: int, scenario: Scenario) -> None:
         """Execute one flight round and write one online-data workbook."""
+        started = datetime.now()
+        self.current_round_started = started
         Log.info("Collection", f"round {round_index}/{len(self.timelines)} case={scenario.case_id}: {scenario.name}")
         self.recorder = None
         self._set_phase(round_index, scenario, 0, "not_started", {})
@@ -165,6 +176,17 @@ class CollectionRunner:
             if path is not None:
                 self.data_logs.append(path)
             self._clear_real_faults()
+            self._collect_offline_logs(scenario, started)
+            self.current_round_started = None
+
+    def _collect_offline_logs(self, scenario: Scenario, started: datetime) -> None:
+        """Use the shared SDK collector to copy PX4 ULog files for DT vehicles."""
+        collector = PX4OfflineLogCollector.from_config(
+            self.config.get("offline_logs"),
+            vehicles=self.vehicles,
+            base_dir=self.base_dir,
+        )
+        self.offline_logs.extend(collector.collect(scenario.case_id, started, dry_run=self.dry_run))
 
     def _execute_step(self, round_index: int, scenario: Scenario, step_index: int, step: dict[str, Any]) -> None:
         """Dispatch one timeline action and maintain recorder phase metadata."""
@@ -241,6 +263,7 @@ class CollectionRunner:
             case_id=scenario.case_id,
             base_dir=self.base_dir,
             metadata_provider=self._recording_metadata,
+            run_stamp=(self.current_round_started or datetime.now()).strftime("%Y%m%d_%H%M%S"),
         )
         self.recorder.start()
 

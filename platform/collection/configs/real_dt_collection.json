@@ -4,10 +4,13 @@
     "timeline.action": ["arm", "disarm", "takeoff", "goto", "velocity", "hover", "land", "mission", "inject_fault", "clear_fault", "wait"],
     "vehicle.backend": ["dt", "real"],
     "recording.fields": ["uavAngEular", "uavAngRate", "uavPosNED", "uavVelNED", "uavAngQuatern", "uavAccB", "uavGyro", "uavMag", "uavVibr"],
+    "recording.output_dir": "Online xlsx destination. Recommended: ../log/online.",
+    "offline_logs.output_dir": "Offline PX4 .ulg destination. Recommended: ../log/offline.",
     "real.init_timing": "startup_delay_s + yaw_init_delay_s + offboard_delay_s",
     "dt.init_timing": "startup_delay_s + offboard_delay_s",
     "toolchain.scripts.windows": "Windows RflySim launcher, usually SITLRun.bat.",
-    "toolchain.scripts.linux": "Linux PX4-SITL launcher, usually SITLRun.sh."
+    "toolchain.scripts.linux": "Linux PX4-SITL launcher, usually SITLRun.sh.",
+    "toolchain.env.RFV_DLL_MODEL": "CopterSim DLL/SO model name, written to DLLModel in SITLRun.bat/SITLRun.sh."
   },
   "toolchain": {
     "_comment": "Enable this when the collection host also launches the DT SITL toolchain. The platform-specific script is selected automatically.",
@@ -20,14 +23,15 @@
     "stop_on_exit": false,
     "env": {
       "RFV_VEHICLE_NUM": "1",
-      "RFV_START_INDEX": "1"
+      "RFV_START_INDEX": "1",
+      "RFV_DLL_MODEL": "FX120_model"
     }
   },
   "recording": {
     "_comment": "Recording starts after arm and stops after the final timeline command. Each timeline writes one xlsx workbook with one sheet per vehicle.",
     "enabled": true,
     "sample_hz": 50,
-    "output_dir": "../log",
+    "output_dir": "../log/online",
     "fields": [
       "uavAngEular",
       "uavAngRate",
@@ -39,6 +43,13 @@
       "uavMag",
       "uavVibr"
     ]
+  },
+  "offline_logs": {
+    "_comment": "After each timeline, copy the newest PX4 .ulg for every DT backend. In dt+real collection this saves only the DT log.",
+    "enabled": true,
+    "output_dir": "../log/offline",
+    "group_by_run": true,
+    "settle_s": 2.0
   },
   "vehicles": [
     {

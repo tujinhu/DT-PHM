@@ -31,7 +31,8 @@ Configure both paths in JSON:
   },
   "env": {
     "RFV_VEHICLE_NUM": "2",
-    "RFV_START_INDEX": "1"
+    "RFV_START_INDEX": "1",
+    "RFV_DLL_MODEL": "FX120_model"
   }
 }
 ```
@@ -39,3 +40,7 @@ Configure both paths in JSON:
 On Linux, `SITLRun.sh` starts the PX4 SITL side. Set `PX4_FIRMWARE_DIR` when
 the firmware tree is not available at `platform/px4/Firmware` or
 `$PSP_PATH_LINUX/Firmware`.
+
+`core/logging.py` provides both online xlsx recording and offline PX4 ULog
+archiving. `PX4OfflineLogCollector` automatically filters configured vehicles
+to DT backends, so mixed `dt + real` runs archive only the DT logs.

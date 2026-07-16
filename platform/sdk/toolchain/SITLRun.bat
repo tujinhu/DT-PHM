@@ -1,8 +1,9 @@
 @ECHO OFF
 
 REM BEGIN RFV_RUNTIME_CONFIG
-SET RFV_VEHICLE_NUM=1
+SET RFV_VEHICLE_NUM=2
 SET RFV_START_INDEX=1
+SET RFV_DLL_MODEL=FX120_model
 REM END RFV_RUNTIME_CONFIG
 
 
@@ -31,6 +32,9 @@ SET /a CLASS_3D_ID=-1
 REM Set use DLL model name or not, use number index or name string
 REM This option is useful for simulation with other types of vehicles instead of multicopters FX120_model QuadModelV
 set DLLModel=FX120_model
+if defined RFV_DLL_MODEL (
+    set DLLModel=%RFV_DLL_MODEL%
+)
 
 REM Check if DLLModel is a name string, if yes, copy the DLL file to CopterSim folder
 SET /A DLLModelVal=DLLModel

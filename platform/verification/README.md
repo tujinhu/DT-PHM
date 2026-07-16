@@ -44,7 +44,27 @@ Run configs can enable state recording. The JSON files use `_comment` and
 }
 ```
 
-Each run writes one `.xlsx` workbook to `platform/verification/log`, with one sheet per vehicle.
+Each run writes one online `.xlsx` workbook to `platform/verification/log/online`,
+with one sheet per vehicle.
+
+DT-only verification can also archive PX4 offline ULog files:
+
+```json
+"offline_logs": {
+  "enabled": true,
+  "output_dir": "../log/offline",
+  "group_by_run": true,
+  "settle_s": 2.0
+}
+```
+
+The default PX4 source path is:
+
+- Windows: `C:/PX4PSP/Firmware/build/px4_sitl_default/instance_*/log/<date>/*.ulg`
+- Linux: `~/PX4PSP/Firmware/build/px4_sitl_default/instance_*/log/<date>/*.ulg`
+
+Set `offline_logs.firmware_dir`, `offline_logs.build_dir`, or
+`offline_logs.date` in JSON when a run uses a non-default location.
 
 ## Real verification
 
@@ -59,3 +79,15 @@ The default configs now point to project-local copies of the needed legacy asset
 - `platform/sdk/rflysim_legacy/PX4MavCtrlV4.py`
 
 Adjust the config files if your RflySim installation paths change.
+
+Set the CopterSim model through JSON:
+
+```json
+"toolchain": {
+  "env": {
+    "RFV_DLL_MODEL": "FX120_model"
+  }
+}
+```
+
+This value is written into `DLLModel` in both `SITLRun.bat` and `SITLRun.sh`.

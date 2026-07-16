@@ -8,7 +8,7 @@ import time
 from typing import Any
 
 from core.interfaces import VehicleBackend, VehicleSpec
-from core.logging import Log, RealtimeDataRecorder
+from core.logging import Log, PX4OfflineLogCollector, RealtimeDataRecorder
 from core.scenario import Scenario, load_json
 from core.toolchain import ToolchainProcess
 from core.trajectory import generate_trajectory
@@ -32,6 +32,7 @@ class VerificationRunner:
         self.events: list[dict[str, Any]] = []
         self.recorder: RealtimeDataRecorder | None = None
         self.data_log_path: Path | None = None
+        self.offline_log_paths: list[Path] = []
 
     @staticmethod
     def from_config_file(
@@ -79,6 +80,12 @@ class VerificationRunner:
                 continue
             resolve_in_place(vehicle, "rfly_utils_path")
 
+        offline_logs = config.get("offline_logs")
+        if isinstance(offline_logs, dict):
+            resolve_in_place(offline_logs, "output_dir")
+            resolve_in_place(offline_logs, "firmware_dir")
+            resolve_in_place(offline_logs, "build_dir")
+
     def build_vehicles(self) -> None:
         """Instantiate every vehicle backend declared by the run config."""
         for vehicle_data in self.config.get("vehicles", []):
@@ -108,12 +115,13 @@ class VerificationRunner:
 
         try:
             self._initialize_vehicles()
-            self._start_recording()
+            self._start_recording(started)
             for index, step in enumerate(self.scenario.timeline, start=1):
                 self._execute_step(index, step)
         finally:
             self._stop_recording()
             self._shutdown_vehicles()
+            self._collect_offline_logs(started)
             self.toolchain.stop()
 
         return self._write_report(started)
@@ -128,13 +136,14 @@ class VerificationRunner:
         Log.info("Runner", "shutting down vehicle backends")
         self._parallel_call(list(self.vehicles.values()), "shutdown", {}, tolerate_errors=True)
 
-    def _start_recording(self) -> None:
+    def _start_recording(self, started: datetime) -> None:
         """Create and start the optional real-time xlsx recorder."""
         self.recorder = RealtimeDataRecorder.from_config(
             self.config.get("recording"),
             vehicles=self.vehicles,
             case_id=self.scenario.case_id,
             base_dir=self.base_dir,
+            run_stamp=started.strftime("%Y%m%d_%H%M%S"),
         )
         self.recorder.start()
 
@@ -143,6 +152,15 @@ class VerificationRunner:
         if self.recorder is None:
             return
         self.data_log_path = self.recorder.stop()
+
+    def _collect_offline_logs(self, started: datetime) -> None:
+        """Use the shared SDK collector to copy PX4 ULog files for DT vehicles."""
+        collector = PX4OfflineLogCollector.from_config(
+            self.config.get("offline_logs"),
+            vehicles=self.vehicles,
+            base_dir=self.base_dir,
+        )
+        self.offline_log_paths.extend(collector.collect(self.scenario.case_id, started, dry_run=self.dry_run))
 
     def _select_targets(self, step: dict[str, Any]) -> list[VehicleBackend]:
         """Resolve a step's target/targets field into backend objects."""
@@ -251,6 +269,7 @@ class VerificationRunner:
             "dry_run": self.dry_run,
             "vehicle_count": len(self.vehicles),
             "data_log": str(self.data_log_path) if self.data_log_path else None,
+            "offline_logs": [str(path) for path in self.offline_log_paths],
             "events": self.events,
         }
         with report_path.open("w", encoding="utf-8") as f:

@@ -7,7 +7,10 @@
     "toolchain.scripts.windows": "Windows RflySim launcher, usually SITLRun.bat.",
     "toolchain.scripts.linux": "Linux PX4-SITL launcher, usually SITLRun.sh.",
     "toolchain.env.RFV_VEHICLE_NUM": "Number of DT vehicles launched by the selected toolchain script.",
-    "toolchain.env.RFV_START_INDEX": "First DT vehicle index launched by the selected toolchain script."
+    "toolchain.env.RFV_START_INDEX": "First DT vehicle index launched by the selected toolchain script.",
+    "toolchain.env.RFV_DLL_MODEL": "CopterSim DLL/SO model name, written to DLLModel in SITLRun.bat/SITLRun.sh.",
+    "offline_logs.output_dir": "Destination folder for copied PX4 .ulg logs.",
+    "offline_logs.firmware_dir": "Optional PX4 Firmware root. Defaults to C:/PX4PSP/Firmware on Windows or ~/PX4PSP/Firmware on Linux."
   },
   "case_id": "hover_fault_001",
   "name": "Hover, inject IMU fault",
@@ -23,14 +26,15 @@
     "stop_on_exit": false,
     "env": {
       "RFV_VEHICLE_NUM": "2",
-      "RFV_START_INDEX": "1"
+      "RFV_START_INDEX": "1",
+      "RFV_DLL_MODEL": "FX120_model"
     }
   },
   "recording": {
-    "_comment": "When enabled, one xlsx workbook is written to output_dir with one sheet per vehicle. sample_hz controls online sampling frequency.",
+    "_comment": "When enabled, one online xlsx workbook is written to output_dir with one sheet per vehicle. sample_hz controls online sampling frequency.",
     "enabled": true,
     "sample_hz": 50,
-    "output_dir": "../log",
+    "output_dir": "../log/online",
     "fields": [
       "uavAngEular",
       "uavAngRate",
@@ -42,6 +46,13 @@
       "uavMag",
       "uavVibr"
     ]
+  },
+  "offline_logs": {
+    "_comment": "DT-only verification copies the newest PX4 .ulg from each instance_N/log/date folder after the run. date is optional; when omitted the latest date folder is used.",
+    "enabled": true,
+    "output_dir": "../log/offline",
+    "group_by_run": true,
+    "settle_s": 2.0
   },
   "vehicles": [
     {

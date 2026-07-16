@@ -35,14 +35,13 @@ class ToolchainProcess:
             raise FileNotFoundError(f"RflySim toolchain script not found: {script_path}")
 
         runtime_env = {str(k): str(v) for k, v in self.config.get("env", {}).items()}
-        vehicle_num = runtime_env.get("RFV_VEHICLE_NUM")
-        start_index = runtime_env.get("RFV_START_INDEX", "1")
-        if vehicle_num is not None:
+        writable_keys = {"RFV_VEHICLE_NUM", "RFV_START_INDEX", "RFV_DLL_MODEL"}
+        if writable_keys & set(runtime_env):
             Log.info(
                 "Toolchain",
-                f"write RFV_VEHICLE_NUM={vehicle_num} RFV_START_INDEX={start_index} to {script_path.name}",
+                f"write RFV runtime config to {script_path.name}: {runtime_env}",
             )
-            self._write_runtime_config(script_path, vehicle_num, start_index)
+            self._write_runtime_config(script_path, runtime_env)
 
         Log.info("Toolchain", f"starting {os_name} toolchain: {script_path}")
         self.process = self._open_process(script_path, runtime_env)
@@ -101,28 +100,28 @@ class ToolchainProcess:
         return "windows" if platform.system().lower().startswith("win") else "linux"
 
     @staticmethod
-    def _write_runtime_config(script_path: Path, vehicle_num: str, start_index: str) -> None:
+    def _write_runtime_config(script_path: Path, runtime_env: dict[str, str]) -> None:
         """Write RFV runtime values into a supported script before launch."""
         suffix = script_path.suffix.lower()
         if suffix in {".bat", ".cmd"}:
-            ToolchainProcess._write_runtime_config_to_bat(script_path, vehicle_num, start_index)
+            ToolchainProcess._write_runtime_config_to_bat(script_path, runtime_env)
         elif suffix == ".sh":
-            ToolchainProcess._write_runtime_config_to_sh(script_path, vehicle_num, start_index)
+            ToolchainProcess._write_runtime_config_to_sh(script_path, runtime_env)
         else:
             raise ValueError(f"Unsupported toolchain script suffix: {script_path.suffix}")
 
     @staticmethod
-    def _write_runtime_config_to_bat(bat_path: Path, vehicle_num: str, start_index: str) -> None:
+    def _write_runtime_config_to_bat(bat_path: Path, runtime_env: dict[str, str]) -> None:
         """Write RFV runtime values directly into the local batch file before launch."""
         begin = "REM BEGIN RFV_RUNTIME_CONFIG"
         end = "REM END RFV_RUNTIME_CONFIG"
         text = bat_path.read_text(encoding="utf-8")
-        block = (
-            f"{begin}\n"
-            f"SET RFV_VEHICLE_NUM={vehicle_num}\n"
-            f"SET RFV_START_INDEX={start_index}\n"
-            f"{end}"
-        )
+        lines = [begin]
+        for key in ["RFV_VEHICLE_NUM", "RFV_START_INDEX", "RFV_DLL_MODEL"]:
+            if key in runtime_env:
+                lines.append(f"SET {key}={runtime_env[key]}")
+        lines.append(end)
+        block = "\n".join(lines)
         if begin not in text or end not in text:
             raise ValueError(f"Missing RFV runtime config markers in {bat_path}")
         prefix, rest = text.split(begin, 1)
@@ -130,17 +129,17 @@ class ToolchainProcess:
         bat_path.write_text(prefix + block + suffix, encoding="utf-8")
 
     @staticmethod
-    def _write_runtime_config_to_sh(sh_path: Path, vehicle_num: str, start_index: str) -> None:
+    def _write_runtime_config_to_sh(sh_path: Path, runtime_env: dict[str, str]) -> None:
         """Write RFV runtime values directly into the local shell script before launch."""
         begin = "# BEGIN RFV_RUNTIME_CONFIG"
         end = "# END RFV_RUNTIME_CONFIG"
         text = sh_path.read_text(encoding="utf-8")
-        block = (
-            f"{begin}\n"
-            f"export RFV_VEHICLE_NUM={vehicle_num}\n"
-            f"export RFV_START_INDEX={start_index}\n"
-            f"{end}"
-        )
+        lines = [begin]
+        for key in ["RFV_VEHICLE_NUM", "RFV_START_INDEX", "RFV_DLL_MODEL"]:
+            if key in runtime_env:
+                lines.append(f"export {key}={runtime_env[key]}")
+        lines.append(end)
+        block = "\n".join(lines)
         if begin not in text or end not in text:
             raise ValueError(f"Missing RFV runtime config markers in {sh_path}")
         prefix, rest = text.split(begin, 1)

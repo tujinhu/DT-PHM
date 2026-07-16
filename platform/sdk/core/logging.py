@@ -3,7 +3,9 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
+import platform as host_platform
 import re
+import shutil
 import threading
 import time
 from typing import Any
@@ -60,6 +62,7 @@ class RealtimeDataRecorder:
         case_id: str = "case",
         enabled: bool = False,
         metadata_provider: Callable[[], Mapping[str, Any]] | None = None,
+        run_stamp: str | None = None,
     ):
         """Configure sampling frequency, fields, output path, and target vehicles."""
         self.vehicles = vehicles
@@ -69,6 +72,7 @@ class RealtimeDataRecorder:
         self.case_id = case_id
         self.enabled = bool(enabled)
         self.metadata_provider = metadata_provider
+        self.run_stamp = run_stamp
         self.records: dict[str, list[dict[str, Any]]] = {vehicle_id: [] for vehicle_id in vehicles}
         self.output_path: Path | None = None
         self._stop_event = threading.Event()
@@ -83,6 +87,7 @@ class RealtimeDataRecorder:
         case_id: str,
         base_dir: str | Path,
         metadata_provider: Callable[[], Mapping[str, Any]] | None = None,
+        run_stamp: str | None = None,
     ) -> "RealtimeDataRecorder":
         """Create a recorder from the optional run-config recording section."""
         cfg = config or {}
@@ -96,6 +101,7 @@ class RealtimeDataRecorder:
             case_id=case_id,
             enabled=bool(cfg.get("enabled", False)),
             metadata_provider=metadata_provider,
+            run_stamp=run_stamp,
         )
 
     def start(self) -> None:
@@ -177,7 +183,7 @@ class RealtimeDataRecorder:
 
     def _write_xlsx(self) -> Path:
         """Write one xlsx workbook with one sheet per vehicle."""
-        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        stamp = self.run_stamp or datetime.now().strftime("%Y%m%d_%H%M%S")
         path = self.output_dir / f"{self.case_id}_{stamp}.xlsx"
         with pd.ExcelWriter(path, engine="openpyxl") as writer:
             wrote_any = False
@@ -197,3 +203,127 @@ class RealtimeDataRecorder:
         """Convert a vehicle id into a valid Excel sheet name."""
         cleaned = re.sub(r"[\[\]\:\*\?\/\\]", "_", str(name))
         return (cleaned or "vehicle")[:31]
+
+
+class PX4OfflineLogCollector:
+    """Archive PX4 ULog files for configured DT vehicle backends."""
+
+    def __init__(
+        self,
+        vehicles: Mapping[str, Any],
+        output_dir: str | Path = "log/offline",
+        enabled: bool = False,
+        firmware_dir: str | Path | None = None,
+        build_dir: str | Path | None = None,
+        date_name: str | None = None,
+        group_by_run: bool = True,
+        settle_s: float = 2.0,
+    ):
+        """Configure where to find PX4 instance logs and where to copy them."""
+        self.vehicles = vehicles
+        self.output_dir = Path(output_dir).resolve()
+        self.enabled = bool(enabled)
+        self.firmware_dir = Path(firmware_dir).resolve() if firmware_dir else None
+        self.build_dir = Path(build_dir).resolve() if build_dir else None
+        self.date_name = str(date_name) if date_name else None
+        self.group_by_run = bool(group_by_run)
+        self.settle_s = float(settle_s)
+
+    @staticmethod
+    def from_config(
+        config: dict[str, Any] | None,
+        vehicles: Mapping[str, Any],
+        base_dir: str | Path,
+    ) -> "PX4OfflineLogCollector":
+        """Create an offline ULog collector from the optional config section."""
+        cfg = config or {}
+        output_ref = Path(cfg.get("output_dir", "../log/offline"))
+        output_dir = output_ref if output_ref.is_absolute() else Path(base_dir).resolve() / output_ref
+        return PX4OfflineLogCollector(
+            vehicles=vehicles,
+            output_dir=output_dir,
+            enabled=bool(cfg.get("enabled", False)),
+            firmware_dir=cfg.get("firmware_dir"),
+            build_dir=cfg.get("build_dir"),
+            date_name=cfg.get("date"),
+            group_by_run=bool(cfg.get("group_by_run", True)),
+            settle_s=float(cfg.get("settle_s", 2.0)),
+        )
+
+    def collect(self, case_id: str, started: datetime, dry_run: bool = False) -> list[Path]:
+        """Copy the newest PX4 .ulg for each DT vehicle and return copied paths."""
+        if not self.enabled:
+            return []
+        if dry_run:
+            Log.info("OfflineLog", "dry-run skip PX4 ULog copy")
+            return []
+
+        dt_vehicles = {
+            vehicle_id: vehicle
+            for vehicle_id, vehicle in self.vehicles.items()
+            if getattr(getattr(vehicle, "spec", None), "backend", None) == "dt"
+        }
+        if not dt_vehicles:
+            Log.info("OfflineLog", "skip PX4 ULog copy because no DT backend is present")
+            return []
+
+        if self.settle_s > 0:
+            time.sleep(self.settle_s)
+
+        target_dir = self._resolve_output_dir(case_id, started)
+        target_dir.mkdir(parents=True, exist_ok=True)
+        build_dir = self._resolve_px4_build_dir()
+
+        copied: list[Path] = []
+        for vehicle_id, vehicle in dt_vehicles.items():
+            instance_id = int(vehicle.spec.vehicle_id)
+            instance_dir = build_dir / f"instance_{instance_id}" / "log"
+            source_log = self._find_latest_ulg(instance_dir, self.date_name)
+            if source_log is None:
+                Log.warn("OfflineLog", f"no .ulg found for {vehicle_id} at {instance_dir}")
+                continue
+            target_name = f"{case_id}_{vehicle_id}_instance_{instance_id}_{source_log.name}"
+            target_path = target_dir / target_name
+            shutil.copy2(source_log, target_path)
+            copied.append(target_path)
+            Log.ok("OfflineLog", f"copied {vehicle_id}: {target_path}")
+        return copied
+
+    def _resolve_output_dir(self, case_id: str, started: datetime) -> Path:
+        """Resolve the destination folder for one run's copied ULog files."""
+        if self.group_by_run:
+            return self.output_dir / f"{case_id}_{started.strftime('%Y%m%d_%H%M%S')}"
+        return self.output_dir
+
+    def _resolve_px4_build_dir(self) -> Path:
+        """Resolve the PX4 build folder containing instance_* log folders."""
+        if self.build_dir is not None:
+            return self.build_dir
+        firmware_dir = self.firmware_dir or self._default_firmware_dir()
+        return firmware_dir / "build" / "px4_sitl_default"
+
+    @staticmethod
+    def _default_firmware_dir() -> Path:
+        """Return the platform default PX4 Firmware directory."""
+        if host_platform.system().lower().startswith("win"):
+            return Path("C:/PX4PSP/Firmware")
+        return Path.home() / "PX4PSP" / "Firmware"
+
+    @staticmethod
+    def _find_latest_ulg(instance_log_dir: Path, date_name: str | None = None) -> Path | None:
+        """Find the newest .ulg under instance_N/log[/date]."""
+        if date_name:
+            date_dirs = [instance_log_dir / date_name]
+        elif instance_log_dir.exists():
+            date_dirs = [path for path in instance_log_dir.iterdir() if path.is_dir()]
+            date_dirs.sort(key=lambda path: path.stat().st_mtime, reverse=True)
+        else:
+            return None
+
+        for date_dir in date_dirs:
+            if not date_dir.exists():
+                continue
+            logs = sorted(date_dir.glob("*.ulg"), key=lambda path: path.stat().st_mtime, reverse=True)
+            if logs:
+                return logs[0]
+        return None

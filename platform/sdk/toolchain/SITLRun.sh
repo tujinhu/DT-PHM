@@ -7,6 +7,7 @@
 # BEGIN RFV_RUNTIME_CONFIG
 export RFV_VEHICLE_NUM=1
 export RFV_START_INDEX=1
+export RFV_DLL_MODEL=MulticopterNoCtrl
 # END RFV_RUNTIME_CONFIG
 
 SHPath="$(cd "$(dirname "$0")"; pwd)"
